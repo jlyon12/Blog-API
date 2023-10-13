@@ -19,12 +19,19 @@ exports.signup = ash(async (req, res, next) => {
 			password
 		);
 		const token = createToken(user._id);
-		res.status(200).json({ user, token });
+		res.status(200).json({ email, token });
 	} catch (err) {
 		res.status(400).json({ err: err.message });
 	}
 });
 
 exports.login = ash(async (req, res, next) => {
-	res.json({ msg: 'Login user' });
+	const { email, password } = req.body;
+	try {
+		const user = await User.login(email, password);
+		const token = createToken(user._id);
+		res.status(200).json({ email, token });
+	} catch (err) {
+		res.status(400).json({ err: err.message });
+	}
 });
