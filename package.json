@@ -25,6 +25,7 @@
 		"debug": "^4.3.4",
 		"dotenv": "^16.3.1",
 		"express": "^4.18.2",
+		"express-async-handler": "^1.2.0",
 		"mongoose": "^7.6.2",
 		"morgan": "^1.10.0"
 	},
