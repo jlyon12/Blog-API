@@ -1,19 +1,23 @@
 const express = require('express');
 const router = express.Router();
+const requireAuth = require('../middlewares/requireAuth');
 
 const postController = require('../controllers/postController');
-// Get all posts
-router.get('/', postController.get_all_posts);
 
+// Get public posts
+router.get('/published', postController.get_published_posts);
 // Get single post
 router.get('/:post_id', postController.get_post);
 
+// Protect routes below
+router.use(requireAuth);
+
+// Get all posts
+router.get('/', postController.get_all_posts);
 // Create a new post
 router.post('/', postController.create_post);
-
 // Delete a post
 router.delete('/:post_id', postController.delete_post);
-
 // Update a post
 router.patch('/:post_id', postController.update_post);
 

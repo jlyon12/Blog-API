@@ -2,9 +2,16 @@ const ash = require('express-async-handler');
 const mongoose = require('mongoose');
 
 const Post = require('../models/postModel');
+
+exports.get_published_posts = ash(async (req, res, next) => {
+	const posts = await Post.find({ is_published: true }).sort({
+		createdAt: -1,
+	});
+	res.status(200).json(posts);
+});
+
 exports.get_all_posts = ash(async (req, res, next) => {
 	const posts = await Post.find({}).sort({ createdAt: -1 });
-
 	res.status(200).json(posts);
 });
 
