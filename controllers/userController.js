@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
 const createToken = (_id) => {
-	return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '10m' });
+	return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
 exports.signup = ash(async (req, res, next) => {

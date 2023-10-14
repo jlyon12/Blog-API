@@ -32,7 +32,20 @@ exports.get_post = ash(async (req, res, next) => {
 });
 
 exports.create_post = ash(async (req, res, next) => {
-	const { title, body, author } = req.body;
+	const { title, body } = req.body;
+	const author = req.user._id;
+
+	const emptyFields = [];
+	if (!title) {
+		emptyFields.push('body');
+	}
+	if (!body) {
+		emptyFields.push('body');
+	}
+	if (emptyFields.length > 0) {
+		res.status(400).json({ err: 'All fields are required', emptyFields });
+	}
+
 	try {
 		const post = await Post.create({ title, body, author });
 		res.status(200).json(post);
