@@ -77,7 +77,7 @@ exports.update_post = ash(async (req, res, next) => {
 		res.status(404).json({ msg: 'Post not found' });
 	}
 
-	const post = await Post.findByIdAndUpdate(id, { ...req.body });
+	const post = await Post.findByIdAndUpdate(id, { ...req.body }, { new: true });
 
 	if (!post) {
 		res.status(404).json({ msg: 'Post not found' });
