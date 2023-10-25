@@ -16,7 +16,7 @@ connectDB();
 
 // Cors configuration
 
-const corsOptions = { origin: 'http://localhost:5173' };
+const corsOptions = { origin: '*' };
 app.use(cors(corsOptions));
 
 // Router
