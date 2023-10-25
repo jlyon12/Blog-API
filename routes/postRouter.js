@@ -7,7 +7,7 @@ const postController = require('../controllers/postController');
 // Get public posts
 router.get('/published', postController.get_published_posts);
 // Get single post
-router.get('/:post_id', postController.get_post);
+router.get('/:id', postController.get_post);
 
 // Protect routes below
 router.use(requireAuth);
@@ -17,8 +17,8 @@ router.get('/', postController.get_all_posts);
 // Create a new post
 router.post('/', postController.create_post);
 // Delete a post
-router.delete('/:post_id', postController.delete_post);
+router.delete('/:id', postController.delete_post);
 // Update a post
-router.patch('/:post_id', postController.update_post);
+router.patch('/:id', postController.update_post);
 
 module.exports = router;
