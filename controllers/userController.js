@@ -35,3 +35,16 @@ exports.login = ash(async (req, res, next) => {
 		res.status(400).json({ err: err.message });
 	}
 });
+
+exports.loginAdmin = ash(async (req, res, next) => {
+	const { email, password } = req.body;
+	try {
+		const user = await User.login(email, password);
+		if (user.is_admin) {
+			const token = createToken(user._id);
+			res.status(200).json({ email, token });
+		} else res.status(403).json({ err: 'Permission Denied' });
+	} catch (err) {
+		res.status(400).json({ err: err.message });
+	}
+});
