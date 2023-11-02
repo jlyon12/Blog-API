@@ -16,13 +16,12 @@ exports.get_all_posts = ash(async (req, res, next) => {
 });
 
 exports.get_post = ash(async (req, res, next) => {
-	const { id } = req.params;
-
-	if (!mongoose.Types.ObjectId.isValid(id)) {
+	const { postId } = req.params;
+	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(404).json({ msg: 'Post not found' });
 	}
 
-	const post = await Post.findById(id);
+	const post = await Post.findById(postId);
 
 	if (!post || !post.is_published) {
 		return res.status(404).json({ msg: 'Post not found' });
@@ -57,13 +56,13 @@ exports.create_post = ash(async (req, res, next) => {
 });
 
 exports.delete_post = ash(async (req, res, next) => {
-	const { id } = req.params;
+	const { postId } = req.params;
 
-	if (!mongoose.Types.ObjectId.isValid(id)) {
+	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(404).json({ msg: 'Post not found' });
 	}
 
-	const post = await Post.findByIdAndDelete(id);
+	const post = await Post.findByIdAndDelete(postId);
 
 	if (!post) {
 		return res.status(404).json({ msg: 'Post not found' });
@@ -73,13 +72,17 @@ exports.delete_post = ash(async (req, res, next) => {
 });
 
 exports.update_post = ash(async (req, res, next) => {
-	const { id } = req.params;
+	const { postId } = req.params;
 
-	if (!mongoose.Types.ObjectId.isValid(id)) {
+	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(404).json({ msg: 'Post not found' });
 	}
 
-	const post = await Post.findByIdAndUpdate(id, { ...req.body }, { new: true });
+	const post = await Post.findByIdAndUpdate(
+		postId,
+		{ ...req.body },
+		{ new: true }
+	);
 
 	if (!post) {
 		return res.status(404).json({ msg: 'Post not found' });
