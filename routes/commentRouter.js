@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requireAuth = require('../middlewares/requireAuth');
-
+const requireAdmin = require('../middlewares/requireAdmin');
 const commentController = require('../controllers/commentController');
 
 // Get all comments
@@ -14,6 +14,8 @@ router.use(requireAuth);
 
 // Create a new comment
 router.post('/', commentController.create_comment);
+
+router.use(requireAdmin);
 // Delete a comment
 router.delete('/:id', commentController.delete_comment);
 

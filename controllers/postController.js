@@ -3,29 +3,29 @@ const mongoose = require('mongoose');
 
 const Post = require('../models/postModel');
 
-exports.get_published_posts = ash(async (req, res, next) => {
-	const posts = await Post.find({ is_published: true }).sort({
-		createdAt: -1,
-	});
-	res.status(200).json(posts);
-});
-
 exports.get_all_posts = ash(async (req, res, next) => {
-	const posts = await Post.find({}).sort({ createdAt: -1 });
-	res.status(200).json(posts);
+	if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
+		const posts = await Post.find({}).sort({ createdAt: -1 });
+		res.status(200).json(posts);
+	} else {
+		const posts = await Post.find({ is_published: true }).sort({
+			createdAt: -1,
+		});
+		res.status(200).json(posts);
+	}
 });
 
 exports.get_post = ash(async (req, res, next) => {
 	const { id } = req.params;
 
 	if (!mongoose.Types.ObjectId.isValid(id)) {
-		res.status(404).json({ msg: 'Post not found' });
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	const post = await Post.findById(id);
 
-	if (!post) {
-		res.status(404).json({ msg: 'Post not found' });
+	if (!post || !post.is_published) {
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	res.status(200).json(post);
@@ -43,7 +43,9 @@ exports.create_post = ash(async (req, res, next) => {
 		emptyFields.push('body');
 	}
 	if (emptyFields.length > 0) {
-		res.status(400).json({ err: 'All fields are required', emptyFields });
+		return res
+			.status(400)
+			.json({ err: 'All fields are required', emptyFields });
 	}
 
 	try {
@@ -58,13 +60,13 @@ exports.delete_post = ash(async (req, res, next) => {
 	const { id } = req.params;
 
 	if (!mongoose.Types.ObjectId.isValid(id)) {
-		res.status(404).json({ msg: 'Post not found' });
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	const post = await Post.findByIdAndDelete(id);
 
 	if (!post) {
-		res.status(404).json({ msg: 'Post not found' });
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	res.status(200).json(post);
@@ -74,13 +76,13 @@ exports.update_post = ash(async (req, res, next) => {
 	const { id } = req.params;
 
 	if (!mongoose.Types.ObjectId.isValid(id)) {
-		res.status(404).json({ msg: 'Post not found' });
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	const post = await Post.findByIdAndUpdate(id, { ...req.body }, { new: true });
 
 	if (!post) {
-		res.status(404).json({ msg: 'Post not found' });
+		return res.status(404).json({ msg: 'Post not found' });
 	}
 
 	res.status(200).json(post);
