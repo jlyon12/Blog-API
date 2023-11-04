@@ -7,13 +7,17 @@ const Comment = require('../models/commentModel');
 
 exports.get_post_comments = ash(async (req, res, next) => {
 	const { postId } = req.params;
+	const { limit, skip, sort } = req.query;
+
 	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(404).json({ msg: 'Post not found.' });
 	}
 	const comments = await Comment.find({
 		post: postId,
 	})
-		.sort({ createdAt: -1 })
+		.sort({ createdAt: sort })
+		.limit(limit)
+		.skip(skip)
 		.populate('author post', 'username title');
 
 	res.status(200).json(comments);
@@ -54,6 +58,7 @@ exports.create_comment = ash(async (req, res, next) => {
 			author,
 			post: postId,
 		});
+
 		await Post.findByIdAndUpdate(
 			postId,
 			{
