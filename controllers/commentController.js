@@ -10,7 +10,18 @@ exports.get_post_comments = ash(async (req, res, next) => {
 	const { limit, skip, sort } = req.query;
 
 	if (!mongoose.Types.ObjectId.isValid(postId)) {
-		return res.status(404).json({ msg: 'Post not found.' });
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['Comments can not be retrieved'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid post id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
 	}
 	const comments = await Comment.find({
 		post: postId,
@@ -20,7 +31,13 @@ exports.get_post_comments = ash(async (req, res, next) => {
 		.skip(skip)
 		.populate('author post', 'username title');
 
-	res.status(200).json(comments);
+	res.status(200).json({
+		status: 'ok',
+		code: 200,
+		messages: ['Successfully retrieved comments for post'],
+		errors: null,
+		data: comments,
+	});
 });
 
 exports.get_single_post_comment = ash(async (req, res, next) => {
@@ -30,22 +47,59 @@ exports.get_single_post_comment = ash(async (req, res, next) => {
 		!mongoose.Types.ObjectId.isValid(commentId) ||
 		!mongoose.Types.ObjectId.isValid(postId)
 	) {
-		return res.status(404).json({ msg: 'Comment not found' });
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['Comment not found'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
 	}
 
 	const post = await Post.findById(postId);
 	const comment = await Comment.findById(commentId);
 
 	if (!comment) {
-		return res.status(404).json({ msg: 'Comment not found' });
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['Comment not found'],
+			errors: [
+				{
+					status: '404',
+					detail: 'Comment does not exist',
+				},
+			],
+			data: null,
+		});
 	}
 	if (!post.is_published) {
-		return res
-			.status(403)
-			.json({ msg: 'Comment not authorized. Post is unpublished' });
+		return res.status(403).json({
+			status: 'error',
+			code: 403,
+			messages: ['Comment not authorized'],
+			errors: [
+				{
+					status: '403',
+					detail: 'Can not view comments of an unpublished post ',
+				},
+			],
+			data: null,
+		});
 	}
 
-	res.status(200).json(comment);
+	res.status(200).json({
+		status: 'ok',
+		code: 200,
+		messages: ['Successfully retrieved comments for post'],
+		errors: null,
+		data: comment,
+	});
 });
 
 exports.create_comment = ash(async (req, res, next) => {
@@ -73,9 +127,26 @@ exports.create_comment = ash(async (req, res, next) => {
 			},
 			{ new: true }
 		);
-		res.status(200).json(comment);
+		res.status(200).json({
+			status: 'success',
+			code: 200,
+			messages: ['Comment successfully created'],
+			errors: null,
+			data: comment,
+		});
 	} catch (err) {
-		res.status(400).json({ msg: err.message });
+		res.status(400).json({
+			status: 'error',
+			code: 400,
+			messages: ['Error creating comment'],
+			errors: [
+				{
+					status: '400',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
 	}
 });
 
@@ -97,8 +168,25 @@ exports.delete_comment = ash(async (req, res, next) => {
 			},
 			{ new: true }
 		);
-		res.status(200).json(comment);
+		res.status(200).json({
+			status: 'success',
+			code: 200,
+			messages: ['Comment successfully deleted'],
+			errors: null,
+			data: comment,
+		});
 	} catch (err) {
-		res.status(400).json({ msg: err.message });
+		res.status(400).json({
+			status: 'error',
+			code: 400,
+			messages: ['Error deleting comment'],
+			errors: [
+				{
+					status: '400',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
 	}
 });
