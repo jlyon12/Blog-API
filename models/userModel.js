@@ -1,7 +1,6 @@
 /* eslint-disable camelcase */
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const validator = require('validator');
 
 const Schema = mongoose.Schema;
 
@@ -29,20 +28,6 @@ UserSchema.statics.signup = async function (
 	const emailExists = await this.findOne({ email });
 	const usernameExists = await this.findOne({ username });
 
-	if (!first_name || !last_name || !username || !email || !password) {
-		throw Error('All fields are required');
-	}
-
-	if (!validator.isEmail(email)) {
-		throw Error('Email must be a valid email');
-	}
-
-	if (!validator.isStrongPassword(password)) {
-		throw Error(
-			'Password must be at least 8 characters long and include at least one lowercase, uppercase, number and symbol'
-		);
-	}
-
 	if (emailExists) {
 		throw Error('This email is already registered');
 	}
@@ -64,10 +49,6 @@ UserSchema.statics.signup = async function (
 	return user;
 };
 UserSchema.statics.login = async function (email, password) {
-	if (!email || !password) {
-		throw Error('All fields are required');
-	}
-
 	const user = await this.findOne({ email });
 
 	if (!user) {

@@ -30,6 +30,7 @@ exports.get_all_posts = ash(async (req, res, next) => {
 
 exports.get_post = ash(async (req, res, next) => {
 	const { postId } = req.params;
+
 	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(406).json({
 			status: 'error',
@@ -56,21 +57,6 @@ exports.get_post = ash(async (req, res, next) => {
 				{
 					status: '404',
 					detail: 'Provided id is not a valid post id. Incorrect type.',
-				},
-			],
-			data: null,
-		});
-	}
-
-	if (!post.is_published) {
-		return res.json({
-			status: 'error',
-			code: 403,
-			messages: ['Post not authorized'],
-			errors: [
-				{
-					status: '403',
-					detail: 'Can not view an unpublished post',
 				},
 			],
 			data: null,

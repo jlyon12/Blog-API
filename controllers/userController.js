@@ -1,5 +1,6 @@
 const ash = require('express-async-handler');
 const jwt = require('jsonwebtoken');
+
 const User = require('../models/userModel');
 
 const createToken = (_id) => {
