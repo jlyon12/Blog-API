@@ -2,16 +2,8 @@ const { body, validationResult } = require('express-validator');
 
 const userSignupValidationRules = () => {
 	return [
-		body('first_name')
-			.trim()
-			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
-		body('last_name')
-			.trim()
-			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
+		body('first_name').trim().notEmpty().withMessage('All fields are required'),
+		body('last_name').trim().notEmpty().withMessage('All fields are required'),
 		body('username')
 			.trim()
 			.isLength({ min: 4 })
@@ -19,14 +11,12 @@ const userSignupValidationRules = () => {
 			.isLength({ max: 25 })
 			.withMessage('Username must be fewer than 25 characters')
 			.isAlphanumeric()
-			.withMessage('Username can only contain letters and numbers')
-			.escape(),
+			.withMessage('Username can only contain letters and numbers'),
 		body('email')
 			.trim()
 			.isEmail()
 			.normalizeEmail()
-			.withMessage('Email must be a valid email')
-			.escape(),
+			.withMessage('Email must be a valid email'),
 		body('password')
 			.isStrongPassword()
 			.withMessage(
@@ -37,36 +27,20 @@ const userSignupValidationRules = () => {
 
 const userLoginValidationRules = () => {
 	return [
-		body('email')
-			.trim()
-			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
-		body('password')
-			.trim()
-			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
+		body('email').trim().notEmpty().withMessage('All fields are required'),
+		body('password').trim().notEmpty().withMessage('All fields are required'),
 	];
 };
 
 const commentValidationRules = () => {
 	return [
-		body('email')
-			.trim()
-			.notEmpty()
-			.withMessage('Comments can not be empty')
-			.escape(),
+		body('email').trim().notEmpty().withMessage('Comments can not be empty'),
 	];
 };
 
 const postValidationRules = () => {
 	return [
-		body('title')
-			.trim()
-			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
+		body('title').trim().notEmpty().withMessage('All fields are required'),
 		body('body').trim().notEmpty().withMessage('All fields are required'),
 	];
 };
@@ -78,8 +52,7 @@ const postValidationPatchRules = () => {
 			.trim()
 			.optional()
 			.notEmpty()
-			.withMessage('All fields are required')
-			.escape(),
+			.withMessage('All fields are required'),
 		body('body')
 			.trim()
 			.optional()
