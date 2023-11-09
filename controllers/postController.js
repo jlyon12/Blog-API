@@ -73,24 +73,11 @@ exports.get_post = ash(async (req, res, next) => {
 });
 
 exports.create_post = ash(async (req, res, next) => {
-	const { title, body } = req.body;
+	const { title, body, tags } = req.body;
 	const author = req.user._id;
 
-	const emptyFields = [];
-	if (!title) {
-		emptyFields.push('body');
-	}
-	if (!body) {
-		emptyFields.push('body');
-	}
-	if (emptyFields.length > 0) {
-		return res
-			.status(400)
-			.json({ err: 'All fields are required', emptyFields });
-	}
-
 	try {
-		const post = await Post.create({ title, body, author });
+		const post = await Post.create({ title, body, author, tags });
 		await User.findByIdAndUpdate(
 			author,
 			{
