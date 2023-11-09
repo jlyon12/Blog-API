@@ -5,8 +5,10 @@ const Post = require('../models/postModel');
 const User = require('../models/userModel');
 
 exports.get_all_posts = ash(async (req, res, next) => {
+	const { tag } = req.query;
+	console.log(tag);
 	if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
-		const posts = await Post.find({}).sort({ createdAt: -1 });
+		const posts = await Post.find(tag && { tags: tag }).sort({ createdAt: -1 });
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
@@ -15,7 +17,9 @@ exports.get_all_posts = ash(async (req, res, next) => {
 			data: posts,
 		});
 	} else {
-		const posts = await Post.find({ is_published: true }).sort({
+		const posts = await Post.find(
+			tag && { tags: tag, is_published: true }
+		).sort({
 			createdAt: -1,
 		});
 		res.status(200).json({
@@ -26,6 +30,19 @@ exports.get_all_posts = ash(async (req, res, next) => {
 			data: posts,
 		});
 	}
+});
+
+exports.get_posts_by_tag = ash(async (res, req, next) => {
+	const { tag } = req.query;
+	console.log(tag);
+	const posts = await Post.find({ tags: tag }).sort({ createdAt: -1 });
+	res.status(200).json({
+		status: 'ok',
+		code: 200,
+		messages: ['Successfully retrieved posts by tag'],
+		errors: null,
+		data: posts,
+	});
 });
 
 exports.get_post = ash(async (req, res, next) => {

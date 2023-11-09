@@ -2,8 +2,8 @@ const { body, validationResult } = require('express-validator');
 
 const userSignupValidationRules = () => {
 	return [
-		body('first_name').trim().notEmpty().withMessage('All fields are required'),
-		body('last_name').trim().notEmpty().withMessage('All fields are required'),
+		body('first_name').trim().notEmpty().withMessage('First Name is required'),
+		body('last_name').trim().notEmpty().withMessage('Last Name is required'),
 		body('username')
 			.trim()
 			.isLength({ min: 4 })
@@ -27,37 +27,29 @@ const userSignupValidationRules = () => {
 
 const userLoginValidationRules = () => {
 	return [
-		body('email').trim().notEmpty().withMessage('All fields are required'),
-		body('password').trim().notEmpty().withMessage('All fields are required'),
+		body('email').trim().notEmpty().withMessage('Email is required'),
+		body('password').trim().notEmpty().withMessage('Password is required'),
 	];
 };
 
 const commentValidationRules = () => {
 	return [
-		body('email').trim().notEmpty().withMessage('Comments can not be empty'),
+		body('body').trim().notEmpty().withMessage('Comment can not be empty'),
 	];
 };
 
 const postValidationRules = () => {
 	return [
-		body('title').trim().notEmpty().withMessage('All fields are required'),
-		body('body').trim().notEmpty().withMessage('All fields are required'),
+		body('title').trim().notEmpty().withMessage('Title is required'),
+		body('body').trim().notEmpty().withMessage('Body is  required'),
 	];
 };
 
 // Ensures that a post can be published via a patch request and ensure the title and body are not deleted.
 const postValidationPatchRules = () => {
 	return [
-		body('title')
-			.trim()
-			.optional()
-			.notEmpty()
-			.withMessage('All fields are required'),
-		body('body')
-			.trim()
-			.optional()
-			.notEmpty()
-			.withMessage('All fields are required'),
+		body('title').trim().optional().notEmpty().withMessage('Title is required'),
+		body('body').trim().optional().notEmpty().withMessage('Body is required'),
 	];
 };
 const validate = (req, res, next) => {
