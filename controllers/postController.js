@@ -6,43 +6,46 @@ const User = require('../models/userModel');
 
 exports.get_all_posts = ash(async (req, res, next) => {
 	const { tag } = req.query;
-	console.log(tag);
-	if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
-		const posts = await Post.find(tag && { tags: tag }).sort({ createdAt: -1 });
-		res.status(200).json({
-			status: 'ok',
-			code: 200,
-			messages: ['Successfully retrieved posts'],
-			errors: null,
-			data: posts,
-		});
-	} else {
-		const posts = await Post.find(
-			tag && { tags: tag, is_published: true }
-		).sort({
-			createdAt: -1,
-		});
-		res.status(200).json({
-			status: 'ok',
-			code: 200,
-			messages: ['Successfully retrieved posts'],
-			errors: null,
-			data: posts,
+	try {
+		if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
+			const posts = await Post.find(tag && { tags: tag }).sort({
+				createdAt: -1,
+			});
+			res.status(200).json({
+				status: 'ok',
+				code: 200,
+				messages: ['Successfully retrieved posts'],
+				errors: null,
+				data: posts,
+			});
+		} else {
+			const posts = await Post.find(
+				tag ? { tags: tag, is_published: true } : { is_published: true }
+			).sort({
+				createdAt: -1,
+			});
+			res.status(200).json({
+				status: 'ok',
+				code: 200,
+				messages: ['Successfully retrieved posts'],
+				errors: null,
+				data: posts,
+			});
+		}
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			code: 500,
+			messages: ['Error retrieving posts'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
 		});
 	}
-});
-
-exports.get_posts_by_tag = ash(async (res, req, next) => {
-	const { tag } = req.query;
-	console.log(tag);
-	const posts = await Post.find({ tags: tag }).sort({ createdAt: -1 });
-	res.status(200).json({
-		status: 'ok',
-		code: 200,
-		messages: ['Successfully retrieved posts by tag'],
-		errors: null,
-		data: posts,
-	});
 });
 
 exports.get_post = ash(async (req, res, next) => {
