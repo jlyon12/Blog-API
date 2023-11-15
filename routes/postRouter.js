@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
+const upload = require('../middlewares/multer');
 const requireAuth = require('../middlewares/requireAuth');
 const requireAdmin = require('../middlewares/requireAdmin');
 const {
@@ -19,6 +20,7 @@ router.post(
 	'/',
 	requireAuth,
 	requireAdmin,
+	upload.single('img'),
 	postValidationRules(),
 	validate,
 	postController.create_post
@@ -36,6 +38,7 @@ router.patch(
 	'/:postId',
 	requireAuth,
 	requireAdmin,
+	upload.single('img'),
 	postValidationPatchRules(),
 	validate,
 	postController.update_post

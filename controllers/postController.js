@@ -1,5 +1,6 @@
 const ash = require('express-async-handler');
 const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
 
 const Post = require('../models/postModel');
 const User = require('../models/userModel');
@@ -93,11 +94,20 @@ exports.get_post = ash(async (req, res, next) => {
 });
 
 exports.create_post = ash(async (req, res, next) => {
-	const { title, body, tags } = req.body;
+	console.log(req.file);
+
+	// eslint-disable-next-line camelcase
+	const { title, body, tags, img_src } = req.body;
 	const author = req.user._id;
+	const img = {
+		url: req.file.path,
+		public_id: req.file.filename,
+		// eslint-disable-next-line camelcase
+		src: img_src,
+	};
 
 	try {
-		const post = await Post.create({ title, body, author, tags });
+		const post = await Post.create({ title, body, author, img, tags });
 		await User.findByIdAndUpdate(
 			author,
 			{
@@ -146,7 +156,7 @@ exports.delete_post = ash(async (req, res, next) => {
 		});
 	}
 
-	const post = await Post.findByIdAndDelete(postId);
+	const post = await Post.findById(postId);
 
 	if (!post) {
 		return res.status(404).json({
@@ -162,7 +172,10 @@ exports.delete_post = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
+
 	try {
+		await cloudinary.uploader.destroy(post.img.public_id);
+		await Post.findByIdAndDelete(postId);
 		await User.findByIdAndUpdate(
 			author,
 			{
@@ -174,7 +187,7 @@ exports.delete_post = ash(async (req, res, next) => {
 		res.status(400).json({
 			status: 'error',
 			code: 400,
-			messages: ['Error deleting post from user'],
+			messages: ['Error deleting post'],
 			errors: [
 				{
 					status: '400',
@@ -195,7 +208,6 @@ exports.delete_post = ash(async (req, res, next) => {
 
 exports.update_post = ash(async (req, res, next) => {
 	const { postId } = req.params;
-
 	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(406).json({
 			status: 'error',
@@ -211,11 +223,7 @@ exports.update_post = ash(async (req, res, next) => {
 		});
 	}
 
-	const post = await Post.findByIdAndUpdate(
-		postId,
-		{ ...req.body },
-		{ new: true }
-	);
+	const post = await Post.findById(postId);
 
 	if (!post) {
 		return res.status(404).json({
@@ -231,12 +239,46 @@ exports.update_post = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
-
-	res.status(200).json({
-		status: 'ok',
-		code: 200,
-		messages: ['Successfully updated post'],
-		errors: null,
-		data: post,
-	});
+	try {
+		await cloudinary.uploader.destroy(post.img.public_id);
+		const updatedPost = await Post.findByIdAndUpdate(
+			postId,
+			req.file
+				? {
+						...req.body,
+						$set: {
+							'img.url': req.file.path,
+							'img.public_id': req.file.filename,
+							'img.src': req.body.img_src,
+						},
+				  }
+				: {
+						...req.body,
+						$set: {
+							'img.src': req.body.img_src,
+						},
+				  },
+			{ new: true }
+		);
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully updated post'],
+			errors: null,
+			data: updatedPost,
+		});
+	} catch (err) {
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['Error updating post'],
+			errors: [
+				{
+					status: '404',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
 });
