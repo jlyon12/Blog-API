@@ -42,6 +42,11 @@ const postValidationRules = () => {
 	return [
 		body('title').trim().notEmpty().withMessage('Title is required'),
 		body('body').trim().notEmpty().withMessage('Body is  required'),
+		body('img_src').trim().notEmpty().withMessage('Image Source is required'),
+		body('img_src_link')
+			.trim()
+			.isURL()
+			.withMessage('Image source must be an URL'),
 	];
 };
 
@@ -50,6 +55,16 @@ const postValidationPatchRules = () => {
 	return [
 		body('title').trim().optional().notEmpty().withMessage('Title is required'),
 		body('body').trim().optional().notEmpty().withMessage('Body is required'),
+		body('img_src')
+			.trim()
+			.optional()
+			.notEmpty()
+			.withMessage('Image Source is required'),
+		body('img_src_link')
+			.trim()
+			.optional()
+			.isURL()
+			.withMessage('Image source must be an URL'),
 	];
 };
 const validate = (req, res, next) => {

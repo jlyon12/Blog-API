@@ -97,13 +97,15 @@ exports.create_post = ash(async (req, res, next) => {
 	console.log(req.file);
 
 	// eslint-disable-next-line camelcase
-	const { title, body, tags, img_src } = req.body;
+	const { title, body, tags, img_src, img_src_link } = req.body;
 	const author = req.user._id;
 	const img = {
 		url: req.file.path,
 		public_id: req.file.filename,
 		// eslint-disable-next-line camelcase
 		src: img_src,
+		// eslint-disable-next-line camelcase
+		src_link: img_src_link,
 	};
 
 	try {
@@ -250,12 +252,14 @@ exports.update_post = ash(async (req, res, next) => {
 							'img.url': req.file.path,
 							'img.public_id': req.file.filename,
 							'img.src': req.body.img_src,
+							'img.src_link': req.body.img_src_link,
 						},
 				  }
 				: {
 						...req.body,
 						$set: {
 							'img.src': req.body.img_src,
+							'img.src_link': req.body.img_src_link,
 						},
 				  },
 			{ new: true }
