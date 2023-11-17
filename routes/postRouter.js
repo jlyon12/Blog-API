@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
 const upload = require('../middlewares/multer');
-const requireAuth = require('../middlewares/requireAuth');
+const requireAuthentication = require('../middlewares/requireAuthentication');
 const requireAdmin = require('../middlewares/requireAdmin');
 const {
 	postValidationRules,
@@ -18,7 +18,7 @@ router.get('/:postId', postController.get_post);
 // Create a new post
 router.post(
 	'/',
-	requireAuth,
+	requireAuthentication,
 	requireAdmin,
 	upload.single('img'),
 	postValidationRules(),
@@ -29,14 +29,14 @@ router.post(
 // Delete a post
 router.delete(
 	'/:postId',
-	requireAuth,
+	requireAuthentication,
 	requireAdmin,
 	postController.delete_post
 );
 // Update a post
 router.patch(
 	'/:postId',
-	requireAuth,
+	requireAuthentication,
 	requireAdmin,
 	upload.single('img'),
 	postValidationPatchRules(),

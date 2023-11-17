@@ -14,6 +14,7 @@ const UserSchema = new Schema(
 		is_admin: { type: Boolean, required: true, default: false },
 		posts: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
 		comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+		bookmarks: [{ type: Schema.Types.ObjectId, ref: 'Post' }],
 	},
 	{ timestamps: true }
 );

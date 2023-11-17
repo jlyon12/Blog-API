@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const requireAuth = require('../middlewares/requireAuth');
+const requireAuthentication = require('../middlewares/requireAuthentication');
 const requireAdmin = require('../middlewares/requireAdmin');
 const {
 	commentValidationRules,
@@ -17,7 +17,7 @@ router.get('/:commentId', commentController.get_single_post_comment);
 // Create a new comment
 router.post(
 	'/',
-	requireAuth,
+	requireAuthentication,
 	commentValidationRules(),
 	validate,
 	commentController.create_comment
@@ -26,7 +26,7 @@ router.post(
 // Delete a comment
 router.delete(
 	'/:commentId',
-	requireAuth,
+	requireAuthentication,
 	requireAdmin,
 	commentController.delete_comment
 );
