@@ -77,7 +77,7 @@ exports.get_post = ash(async (req, res, next) => {
 			errors: [
 				{
 					status: '404',
-					detail: 'Provided id is not a valid post id. Incorrect type.',
+					detail: 'Post does not exist',
 				},
 			],
 			data: null,
@@ -242,7 +242,9 @@ exports.update_post = ash(async (req, res, next) => {
 		});
 	}
 	try {
-		await cloudinary.uploader.destroy(post.img.public_id);
+		if (req.file) {
+			await cloudinary.uploader.destroy(post.img.public_id);
+		}
 		const updatedPost = await Post.findByIdAndUpdate(
 			postId,
 			req.file
