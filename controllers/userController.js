@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 const User = require('../models/userModel');
 const Post = require('../models/postModel');
-
+const Comment = require('../models/commentModel');
 const createToken = (_id) => {
 	return jwt.sign({ _id }, process.env.JWT_SECRET, { expiresIn: '3d' });
 };
@@ -114,7 +114,110 @@ exports.loginAdmin = ash(async (req, res, next) => {
 		});
 	}
 });
+exports.get_user_profile = ash(async (req, res, next) => {
+	const { userId } = req.params;
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid User id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
+	}
 
+	const user = await User.findById(userId).select({ password: 0, is_admin: 0 });
+
+	if (!user) {
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '404',
+					detail: 'User does not exist',
+				},
+			],
+			data: null,
+		});
+	}
+	res.status(200).json({
+		status: 'ok',
+		code: 200,
+		messages: ['Retrieved user profile'],
+		errors: null,
+		data: user,
+	});
+});
+
+exports.update_user = ash(async (req, res, next) => {
+	const { userId } = req.params;
+	console.log(req.body);
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid User id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
+	}
+
+	const user = await User.findById(userId);
+
+	if (!user) {
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '404',
+					detail: 'User does not exist',
+				},
+			],
+			data: null,
+		});
+	}
+	try {
+		await User.findByIdAndUpdate(userId, { ...req.body }, { new: true });
+		const updatedUser = await User.findById(userId).select({
+			password: 0,
+			is_admin: 0,
+		});
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully updated user profile'],
+			errors: null,
+			data: updatedUser,
+		});
+	} catch (err) {
+		res.status(400).json({
+			status: 'error',
+			code: 400,
+			messages: ['Could update user profile'],
+			errors: [
+				{
+					status: '400',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
+});
 exports.get_bookmarks = ash(async (req, res, next) => {
 	const { userId } = req.params;
 	if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -148,7 +251,9 @@ exports.get_bookmarks = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
-	const bookmarks = await User.findById(userId).select('bookmarks');
+	const bookmarks = await User.findById(userId)
+		.select('bookmarks')
+		.populate('bookmarks');
 	res.status(200).json({
 		status: 'ok',
 		code: 200,
@@ -238,20 +343,13 @@ exports.add_bookmark = ash(async (req, res, next) => {
 			},
 			{ new: true }
 		);
-		const newBookmark = await User.findOne(
-			{
-				_id: user.id,
-				bookmarks: postId,
-			},
-			{ bookmarks$: postId }
-		).select({ _id: 0 });
 
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
 			messages: ['Successfully added bookmark'],
 			errors: null,
-			data: newBookmark,
+			data: post,
 		});
 	} catch (err) {
 		res.status(400).json({
@@ -354,7 +452,7 @@ exports.delete_bookmark = ash(async (req, res, next) => {
 			code: 200,
 			messages: ['Successfully deleted bookmark'],
 			errors: null,
-			data: bookmark,
+			data: post,
 		});
 	} catch (err) {
 		res.status(400).json({
@@ -433,4 +531,54 @@ exports.delete_bookmarks = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
+});
+
+exports.delete_user = ash(async (req, res, next) => {
+	const { userId } = req.params;
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid User id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
+	}
+	const user = await User.findById(userId);
+	if (!user) {
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '404',
+					detail: 'User does not exist',
+				},
+			],
+			data: null,
+		});
+	}
+
+	try {
+		const deletedUser = await User.deleteOne({ _id: userId });
+		const userComments = await Comment.deleteMany({ author: user._id });
+		const userPosts = await Post.deleteMany({ author: user._id });
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully deleted user data.'],
+			errors: null,
+			data: {
+				users_deleted: deletedUser,
+				posts_deleted: userPosts,
+				comments_deleted: userComments,
+			},
+		});
+	} catch (err) {}
 });

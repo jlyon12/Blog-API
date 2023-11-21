@@ -24,6 +24,35 @@ const userSignupValidationRules = () => {
 			),
 	];
 };
+const userValidationPatchRules = () => {
+	return [
+		body('first_name')
+			.trim()
+			.optional()
+			.notEmpty()
+			.withMessage('First Name is required'),
+		body('last_name')
+			.trim()
+			.optional()
+			.notEmpty()
+			.withMessage('Last Name is required'),
+		body('username')
+			.trim()
+			.optional()
+			.isLength({ min: 4 })
+			.withMessage('Username must be at least 4 characters')
+			.isLength({ max: 25 })
+			.withMessage('Username must be fewer than 25 characters')
+			.isAlphanumeric()
+			.withMessage('Username can only contain letters and numbers'),
+		body('email')
+			.trim()
+			.optional()
+			.isEmail()
+			.normalizeEmail()
+			.withMessage('Email must be a valid email'),
+	];
+};
 
 const userLoginValidationRules = () => {
 	return [
@@ -91,6 +120,7 @@ const validate = (req, res, next) => {
 module.exports = {
 	userSignupValidationRules,
 	userLoginValidationRules,
+	userValidationPatchRules,
 	commentValidationRules,
 	postValidationRules,
 	postValidationPatchRules,

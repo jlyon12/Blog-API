@@ -1,4 +1,7 @@
 const requireAuthorization = async (req, res, next) => {
+	if (!req.user) {
+		return res.status(401).json({ err: 'Authorization Required' });
+	}
 	const { userId } = req.params;
 	const activeUserId = req.user.id;
 	if (!(userId === activeUserId)) {

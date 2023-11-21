@@ -94,8 +94,6 @@ exports.get_post = ash(async (req, res, next) => {
 });
 
 exports.create_post = ash(async (req, res, next) => {
-	console.log(req.file);
-
 	// eslint-disable-next-line camelcase
 	const { title, body, tags, img_src, img_src_link } = req.body;
 	const author = req.user._id;

@@ -3,6 +3,7 @@ const router = express.Router({ mergeParams: true });
 const {
 	userSignupValidationRules,
 	userLoginValidationRules,
+	userValidationPatchRules,
 	validate,
 } = require('../middlewares/validator');
 const requireAuthentication = require('../middlewares/requireAuthentication');
@@ -31,6 +32,29 @@ router.post(
 	userLoginValidationRules(),
 	validate,
 	userController.loginAdmin
+);
+
+router.get(
+	'/:userId',
+	requireAuthentication,
+	requireAuthorization,
+	userController.get_user_profile
+);
+
+router.patch(
+	'/:userId',
+	requireAuthentication,
+	requireAuthorization,
+	userValidationPatchRules(),
+	validate,
+	userController.update_user
+);
+
+router.delete(
+	'/:userId',
+	requireAuthentication,
+	requireAuthorization,
+	userController.delete_user
 );
 
 router.get(
