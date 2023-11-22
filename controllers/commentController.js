@@ -7,7 +7,10 @@ const Comment = require('../models/commentModel');
 
 exports.get_post_comments = ash(async (req, res, next) => {
 	const { postId } = req.params;
-	const { limit, skip, sort } = req.query;
+	let { sort, page, pageSize } = req.query;
+	const filter = [
+		postId && { post: new mongoose.Types.ObjectId(postId) },
+	].filter(Boolean);
 
 	if (!mongoose.Types.ObjectId.isValid(postId)) {
 		return res.status(406).json({
@@ -23,21 +26,75 @@ exports.get_post_comments = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
-	const comments = await Comment.find({
-		post: postId,
-	})
-		.sort({ createdAt: sort })
-		.limit(limit)
-		.skip(skip)
-		.populate('author post', 'username title');
-
-	res.status(200).json({
-		status: 'ok',
-		code: 200,
-		messages: ['Successfully retrieved comments for post'],
-		errors: null,
-		data: comments,
-	});
+	try {
+		sort = parseInt(sort, 10) || -1;
+		page = parseInt(page, 10) || 1;
+		pageSize = parseInt(pageSize, 10) || 20;
+		const comments = await Comment.aggregate([
+			{
+				$facet: {
+					metadata: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{ $count: 'totalCount' },
+					],
+					data: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{ $sort: { createdAt: sort } },
+						{ $skip: (page - 1) * pageSize },
+						{ $limit: pageSize },
+					],
+				},
+			},
+		]);
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully retrieved post comments'],
+			errors: null,
+			links: {
+				prev:
+					page > 1
+						? `${process.env.SERVER_ORIGIN}/api/posts/${postId}/comments?page=${
+								page - 1
+						  }&pageSize=${pageSize}`
+						: null,
+				next:
+					Math.ceil(page * pageSize) <= comments[0].metadata[0].totalCount
+						? `${process.env.SERVER_ORIGIN}/api/posts/${postId}/comments?page=${
+								page + 1
+						  }&pageSize=${pageSize}`
+						: null,
+			},
+			metadata: {
+				totalCount: comments[0].metadata[0].totalCount,
+				page,
+				pageSize,
+				filter,
+			},
+			data: comments[0].data,
+		});
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			code: 500,
+			messages: ['Error retrieving post comments'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
 });
 
 exports.get_single_post_comment = ash(async (req, res, next) => {
