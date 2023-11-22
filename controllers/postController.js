@@ -6,33 +6,60 @@ const Post = require('../models/postModel');
 const User = require('../models/userModel');
 
 exports.get_all_posts = ash(async (req, res, next) => {
-	const { tag } = req.query;
+	let { tag, page, pageSize } = req.query;
+	const filter = [tag && { tags: tag }].filter(Boolean);
 	try {
+		page = parseInt(page, 10) || 1;
+		pageSize = parseInt(pageSize, 10) || 20;
 		if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
-			const posts = await Post.find(tag && { tags: tag }).sort({
-				createdAt: -1,
-			});
-			res.status(200).json({
-				status: 'ok',
-				code: 200,
-				messages: ['Successfully retrieved posts'],
-				errors: null,
-				data: posts,
-			});
+			filter.push({});
 		} else {
-			const posts = await Post.find(
-				tag ? { tags: tag, is_published: true } : { is_published: true }
-			).sort({
-				createdAt: -1,
-			});
-			res.status(200).json({
-				status: 'ok',
-				code: 200,
-				messages: ['Successfully retrieved posts'],
-				errors: null,
-				data: posts,
-			});
+			filter.push({ is_published: true });
 		}
+		const posts = await Post.aggregate([
+			{
+				$facet: {
+					metadata: [{ $count: 'totalCount' }],
+					data: [
+						{ $sort: { createdAt: -1 } },
+						{ $skip: (page - 1) * pageSize },
+						{ $limit: pageSize },
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+					],
+				},
+			},
+		]);
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully retrieved posts'],
+			errors: null,
+			links: {
+				prev:
+					page > 1
+						? `${process.env.SERVER_ORIGIN}/api/posts/?page=${
+								page - 1
+						  }&pageSize=${pageSize}`
+						: null,
+				next:
+					Math.ceil(page * pageSize) <= posts[0].metadata[0].totalCount
+						? `${process.env.SERVER_ORIGIN}/api/posts/?page=${
+								page + 1
+						  }&pageSize=${pageSize}`
+						: null,
+			},
+			metadata: {
+				totalCount: posts[0].metadata[0].totalCount,
+				page,
+				pageSize,
+				filter,
+			},
+			data: posts[0].data,
+		});
 	} catch (err) {
 		res.status(500).json({
 			status: 'error',
