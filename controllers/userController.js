@@ -535,6 +535,7 @@ exports.delete_bookmarks = ash(async (req, res, next) => {
 
 exports.delete_user = ash(async (req, res, next) => {
 	const { userId } = req.params;
+	const { password } = req.body;
 	if (!mongoose.Types.ObjectId.isValid(userId)) {
 		return res.status(406).json({
 			status: 'error',
@@ -564,7 +565,22 @@ exports.delete_user = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
-
+	try {
+		await User.login(user.email, password);
+	} catch (err) {
+		return res.status(401).json({
+			status: 'error',
+			code: 401,
+			messages: ['Could not delete user', 'User password is required'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
 	try {
 		const deletedUser = await User.deleteOne({ _id: userId });
 		const userComments = await Comment.deleteMany({ author: user._id });
@@ -580,5 +596,18 @@ exports.delete_user = ash(async (req, res, next) => {
 				comments_deleted: userComments,
 			},
 		});
-	} catch (err) {}
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			code: 500,
+			messages: ['Could not delete user'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
 });
