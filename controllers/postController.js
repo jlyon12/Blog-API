@@ -6,9 +6,10 @@ const Post = require('../models/postModel');
 const User = require('../models/userModel');
 
 exports.get_all_posts = ash(async (req, res, next) => {
-	let { tag, page, pageSize } = req.query;
+	let { tag, page, pageSize, sort } = req.query;
 	const filter = [tag && { tags: tag }].filter(Boolean);
 	try {
+		sort = parseInt(sort, 10) || -1;
 		page = parseInt(page, 10) || 1;
 		pageSize = parseInt(pageSize, 10) || 20;
 		if (process.env.CMS_CROSS_ORIGIN === req.headers.origin) {
@@ -21,7 +22,7 @@ exports.get_all_posts = ash(async (req, res, next) => {
 				$facet: {
 					metadata: [{ $count: 'totalCount' }],
 					data: [
-						{ $sort: { createdAt: -1 } },
+						{ $sort: { createdAt: sort } },
 						{ $skip: (page - 1) * pageSize },
 						{ $limit: pageSize },
 						{
