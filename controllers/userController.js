@@ -582,9 +582,17 @@ exports.delete_user = ash(async (req, res, next) => {
 		});
 	}
 	try {
-		const deletedUser = await User.deleteOne({ _id: userId });
+		const commentRefs = await User.findById(userId).select({
+			_id: 0,
+			comments: 1,
+		});
 		const userComments = await Comment.deleteMany({ author: user._id });
+		await Post.updateMany(
+			{},
+			{ $pull: { comments: { $in: commentRefs.comments } } }
+		);
 		const userPosts = await Post.deleteMany({ author: user._id });
+		const deletedUser = await User.deleteOne({ _id: userId });
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
