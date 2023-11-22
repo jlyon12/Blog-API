@@ -47,6 +47,28 @@ exports.get_post_comments = ash(async (req, res, next) => {
 								$and: filter,
 							},
 						},
+						{
+							$lookup: {
+								from: 'users',
+								localField: 'author',
+								foreignField: '_id',
+								as: 'author',
+							},
+						},
+						{ $unwind: '$author' },
+						{
+							$project: {
+								_id: 1,
+								body: 1,
+								author: {
+									_id: '$author._id',
+									username: '$author.username',
+								},
+								post: 1,
+								createdAt: 1,
+								updatedAt: 1,
+							},
+						},
 						{ $sort: { createdAt: sort } },
 						{ $skip: (page - 1) * pageSize },
 						{ $limit: pageSize },
