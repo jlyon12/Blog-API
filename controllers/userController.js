@@ -220,6 +220,10 @@ exports.update_user = ash(async (req, res, next) => {
 });
 exports.get_bookmarks = ash(async (req, res, next) => {
 	const { userId } = req.params;
+	let { sort, page, pageSize } = req.query;
+	const filter = [
+		userId && { _id: new mongoose.Types.ObjectId(userId) },
+	].filter(Boolean);
 	if (!mongoose.Types.ObjectId.isValid(userId)) {
 		return res.status(406).json({
 			status: 'error',
@@ -251,16 +255,108 @@ exports.get_bookmarks = ash(async (req, res, next) => {
 			data: null,
 		});
 	}
-	const bookmarks = await User.findById(userId)
-		.select('bookmarks')
-		.populate('bookmarks');
-	res.status(200).json({
-		status: 'ok',
-		code: 200,
-		messages: ['Retrieved user bookmarks'],
-		errors: null,
-		data: bookmarks,
-	});
+	try {
+		sort = parseInt(sort, 10) || -1;
+		page = parseInt(page, 10) || 1;
+		pageSize = parseInt(pageSize, 10) || 20;
+		const bookmarks = await User.aggregate([
+			{
+				$facet: {
+					metadata: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{
+							$project: {
+								totalCount: {
+									$size: '$bookmarks',
+								},
+							},
+						},
+					],
+					data: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{
+							$lookup: {
+								from: 'posts',
+								localField: 'bookmarks',
+								foreignField: '_id',
+								as: 'bookmarks',
+							},
+						},
+						{ $unwind: '$bookmarks' },
+						{
+							$project: {
+								_id: '$bookmarks._id',
+								title: '$bookmarks.title',
+								body: '$bookmarks.body',
+								author: '$bookmarks.author',
+								comments: '$bookmarks.comments',
+								img: '$bookmarks.img',
+								tags: '$bookmarks.tags',
+								is_published: '$bookmarks.is_published',
+								createdAt: '$bookmarks.createdAt',
+								updatedAt: '$bookmarks.updatedAt',
+							},
+						},
+						{ $sort: { createdAt: sort } },
+						{ $skip: (page - 1) * pageSize },
+						{ $limit: pageSize },
+					],
+				},
+			},
+		]);
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully retrieved user bookmarks'],
+			errors: null,
+			links: {
+				prev:
+					page > 1
+						? `${
+								process.env.SERVER_ORIGIN
+						  }/api/users/${userId}/bookmarks?page=${
+								page - 1
+						  }&pageSize=${pageSize}`
+						: null,
+				next:
+					Math.ceil(page * pageSize) <= bookmarks[0].metadata[0].totalCount
+						? `${
+								process.env.SERVER_ORIGIN
+						  }/api/users/${userId}/bookmarks?page=${
+								page + 1
+						  }&pageSize=${pageSize}`
+						: null,
+			},
+			metadata: {
+				totalCount: bookmarks[0].metadata[0].totalCount,
+				page,
+				pageSize,
+				filter,
+			},
+			data: bookmarks[0].data,
+		});
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			code: 500,
+			messages: ['Error retrieving user bookmarks'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
 });
 
 exports.add_bookmark = ash(async (req, res, next) => {
