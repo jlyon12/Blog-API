@@ -230,9 +230,14 @@ exports.create_comment = ash(async (req, res, next) => {
 });
 
 exports.delete_comment = ash(async (req, res, next) => {
-	const { postId, commentId } = req.params;
+	let { postId, commentId, userId } = req.params;
+
 	try {
 		const comment = await Comment.findByIdAndDelete(commentId);
+		if (userId) {
+			postId = comment.post;
+		}
+
 		await Post.findByIdAndUpdate(
 			postId,
 			{

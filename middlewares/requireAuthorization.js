@@ -4,6 +4,7 @@ const requireAuthorization = async (req, res, next) => {
 	}
 	const { userId } = req.params;
 	const activeUserId = req.user.id;
+
 	if (!(userId === activeUserId)) {
 		return res.status(403).json({
 			status: 'error',

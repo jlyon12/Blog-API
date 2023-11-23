@@ -715,3 +715,140 @@ exports.delete_user = ash(async (req, res, next) => {
 		});
 	}
 });
+
+exports.get_comments = ash(async (req, res, next) => {
+	const { userId } = req.params;
+	let { sort, page, pageSize } = req.query;
+	const filter = [
+		userId && { author: new mongoose.Types.ObjectId(userId) },
+	].filter(Boolean);
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		return res.status(406).json({
+			status: 'error',
+			code: 406,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '406',
+					detail: 'Provided id is not a valid User id. Incorrect type.',
+				},
+			],
+			data: null,
+		});
+	}
+
+	const user = await User.findById(userId);
+
+	if (!user) {
+		return res.status(404).json({
+			status: 'error',
+			code: 404,
+			messages: ['User not found'],
+			errors: [
+				{
+					status: '404',
+					detail: 'User does not exist',
+				},
+			],
+			data: null,
+		});
+	}
+	try {
+		sort = parseInt(sort, 10) || -1;
+		page = parseInt(page, 10) || 1;
+		pageSize = parseInt(pageSize, 10) || 20;
+		const comments = await Comment.aggregate([
+			{
+				$facet: {
+					metadata: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{ $count: 'totalCount' },
+					],
+					data: [
+						{
+							$match: {
+								$and: filter,
+							},
+						},
+						{
+							$lookup: {
+								from: 'posts',
+								localField: 'post',
+								foreignField: '_id',
+								as: 'post',
+							},
+						},
+						{
+							$lookup: {
+								from: 'users',
+								localField: 'author',
+								foreignField: '_id',
+								as: 'author',
+							},
+						},
+
+						{ $unwind: '$post' },
+						{
+							$project: {
+								_id: 1,
+								body: 1,
+								author: { _id: '$author._id', username: '$author.username' },
+								post: { _id: '$post._id', title: '$post.title' },
+								createdAt: 1,
+								updatedAt: 1,
+							},
+						},
+						{ $unwind: '$author' },
+						{ $sort: { createdAt: sort } },
+						{ $skip: (page - 1) * pageSize },
+						{ $limit: pageSize },
+					],
+				},
+			},
+		]);
+		res.status(200).json({
+			status: 'ok',
+			code: 200,
+			messages: ['Successfully retrieved user comments'],
+			errors: null,
+			links: {
+				prev:
+					page > 1
+						? `${process.env.SERVER_ORIGIN}/api/users/${userId}/comments?page=${
+								page - 1
+						  }&pageSize=${pageSize}`
+						: null,
+				next:
+					Math.ceil(page * pageSize) <= comments[0].metadata[0].totalCount
+						? `${process.env.SERVER_ORIGIN}/api/users/${userId}/comments?page=${
+								page + 1
+						  }&pageSize=${pageSize}`
+						: null,
+			},
+			metadata: {
+				totalCount: comments[0].metadata[0].totalCount,
+				page,
+				pageSize,
+				filter,
+			},
+			data: comments[0].data,
+		});
+	} catch (err) {
+		res.status(500).json({
+			status: 'error',
+			code: 500,
+			messages: ['Error retrieving user comments'],
+			errors: [
+				{
+					status: '500',
+					detail: err.message,
+				},
+			],
+			data: null,
+		});
+	}
+});

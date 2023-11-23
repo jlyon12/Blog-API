@@ -9,6 +9,7 @@ const {
 const requireAuthentication = require('../middlewares/requireAuthentication');
 const requireAuthorization = require('../middlewares/requireAuthorization');
 const userController = require('../controllers/userController');
+const commentController = require('../controllers/commentController');
 
 // Signup user
 router.post(
@@ -63,6 +64,7 @@ router.get(
 	requireAuthorization,
 	userController.get_bookmarks
 );
+
 router.post(
 	'/:userId/bookmarks',
 	requireAuthentication,
@@ -82,4 +84,17 @@ router.delete(
 	userController.delete_bookmarks
 );
 
+router.get(
+	'/:userId/comments',
+	requireAuthentication,
+
+	userController.get_comments
+);
+
+router.delete(
+	'/:userId/comments/:commentId',
+	requireAuthentication,
+	requireAuthorization,
+	commentController.delete_comment
+);
 module.exports = router;
