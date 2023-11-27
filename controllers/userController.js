@@ -10,7 +10,7 @@ const createToken = (_id) => {
 };
 
 exports.signup = ash(async (req, res, next) => {
-	// eslint-disable-next-line camelcase
+	//  eslint-disable-next-line camelcase
 	const { first_name, last_name, username, email, password } = req.body;
 
 	try {
@@ -312,6 +312,10 @@ exports.get_bookmarks = ash(async (req, res, next) => {
 				},
 			},
 		]);
+		// If not docuements are found in aggregation - default total count to zeo to avoid error
+		const totalCount = bookmarks[0].metadata[0]
+			? bookmarks[0].metadata[0].totalCount
+			: 0;
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
@@ -327,7 +331,7 @@ exports.get_bookmarks = ash(async (req, res, next) => {
 						  }&pageSize=${pageSize}`
 						: null,
 				next:
-					Math.ceil(page * pageSize) <= bookmarks[0].metadata[0].totalCount
+					Math.ceil(page * pageSize) <= totalCount
 						? `${
 								process.env.SERVER_ORIGIN
 						  }/api/users/${userId}/bookmarks?page=${
@@ -336,7 +340,7 @@ exports.get_bookmarks = ash(async (req, res, next) => {
 						: null,
 			},
 			metadata: {
-				totalCount: bookmarks[0].metadata[0].totalCount,
+				totalCount,
 				page,
 				pageSize,
 				filter,
@@ -759,7 +763,7 @@ exports.get_comments = ash(async (req, res, next) => {
 		pageSize = parseInt(pageSize, 10) || 20;
 		const comments = await Comment.aggregate([
 			{
-				$facet: {
+				$w: {
 					metadata: [
 						{
 							$match: {
@@ -810,6 +814,10 @@ exports.get_comments = ash(async (req, res, next) => {
 				},
 			},
 		]);
+		// If not docuements are found in aggregation - default total count to zeo to avoid error
+		const totalCount = comments[0].metadata[0]
+			? comments[0].metadata[0].totalCount
+			: 0;
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
@@ -823,14 +831,14 @@ exports.get_comments = ash(async (req, res, next) => {
 						  }&pageSize=${pageSize}`
 						: null,
 				next:
-					Math.ceil(page * pageSize) <= comments[0].metadata[0].totalCount
+					Math.ceil(page * pageSize) <= totalCount
 						? `${process.env.SERVER_ORIGIN}/api/users/${userId}/comments?page=${
 								page + 1
 						  }&pageSize=${pageSize}`
 						: null,
 			},
 			metadata: {
-				totalCount: comments[0].metadata[0].totalCount,
+				totalCount,
 				page,
 				pageSize,
 				filter,

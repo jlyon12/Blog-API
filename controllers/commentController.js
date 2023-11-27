@@ -76,6 +76,11 @@ exports.get_post_comments = ash(async (req, res, next) => {
 				},
 			},
 		]);
+		// If not docuements are found in aggregation - default total count to zeo to avoid error
+		const totalCount = comments[0].metadata[0]
+			? comments[0].metadata[0].totalCount
+			: 0;
+
 		res.status(200).json({
 			status: 'ok',
 			code: 200,
@@ -89,14 +94,14 @@ exports.get_post_comments = ash(async (req, res, next) => {
 						  }&pageSize=${pageSize}`
 						: null,
 				next:
-					Math.ceil(page * pageSize) <= comments[0].metadata[0].totalCount
+					Math.ceil(page * pageSize) <= totalCount
 						? `${process.env.SERVER_ORIGIN}/api/posts/${postId}/comments?page=${
 								page + 1
 						  }&pageSize=${pageSize}`
 						: null,
 			},
 			metadata: {
-				totalCount: comments[0].metadata[0].totalCount,
+				totalCount,
 				page,
 				pageSize,
 				filter,
