@@ -158,7 +158,6 @@ exports.get_user_profile = ash(async (req, res, next) => {
 
 exports.update_user = ash(async (req, res, next) => {
 	const { userId } = req.params;
-	console.log(req.body);
 	if (!mongoose.Types.ObjectId.isValid(userId)) {
 		return res.status(406).json({
 			status: 'error',
