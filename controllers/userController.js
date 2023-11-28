@@ -762,7 +762,7 @@ exports.get_comments = ash(async (req, res, next) => {
 		pageSize = parseInt(pageSize, 10) || 20;
 		const comments = await Comment.aggregate([
 			{
-				$w: {
+				$facet: {
 					metadata: [
 						{
 							$match: {
